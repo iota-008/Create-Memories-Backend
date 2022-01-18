@@ -24,10 +24,7 @@ app.use(
 );
 app.use(
 	cors({
-		origin: [
-			"http://localhost:3000/",
-			"https://create-your-memory.netlify.app/",
-		],
+		origin: ["http://localhost:3000", "https://create-your-memory.netlify.app"],
 	})
 );
 app.use("/user", userRoutes);
