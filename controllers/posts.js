@@ -14,7 +14,7 @@ export const getPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
 	const { title, message, selectedFile, creator, tags, userName } = req.body;
-	const newPostMessage = new PostMessage({
+	const newPostMessage = await new PostMessage({
 		title,
 		message,
 		selectedFile,
@@ -73,7 +73,9 @@ export const deletePost = async (req, res) => {
 			return res.status(400).json({ message: id + " is invalid mongoDB id" });
 
 		await PostMessage.findByIdAndRemove(id);
-		return res.json({ message: `Post Deleted Successfully` });
+		return res
+			.status(200)
+			.json({ id: id, message: `Post Deleted Successfully` });
 	} catch (error) {
 		return res.status(500).json({
 			message: error.message,
@@ -91,7 +93,10 @@ export const likePost = async (req, res) => {
 		const authHeader = req.headers["auth-token"];
 		const token = authHeader && authHeader.split(" ")[1];
 
-		if (!token) return res.status(401).json({ message: "Access Denied, Please sign-in again" });
+		if (!token)
+			return res
+				.status(401)
+				.json({ message: "Access Denied, Please sign-in again" });
 
 		const user = jsonwebtoken.verify(token, process.env.SECRET_KEY);
 
