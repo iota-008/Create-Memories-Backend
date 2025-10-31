@@ -11,7 +11,7 @@ export const getPosts = async (req, res) => {
 
         const [total, posts] = await Promise.all([
             PostMessage.countDocuments({}),
-            PostMessage.find({}).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+            PostMessage.find({}).sort(sort).skip((page - 1) * limit).limit(limit).lean({ virtuals: true }),
         ]);
 
         return res.status(200).json({
@@ -107,7 +107,7 @@ export const likePost = async (req, res) => {
             return res.status(400).json({ message: id + " is invalid mongoDB id" });
 
         const user = req.user; // set by verify middleware
-        if (!user || !user.userName) {
+        if (!user || !user._id) {
             return res.status(401).json({ message: "Access Denied, Please sign-in again" });
         }
 
@@ -119,13 +119,13 @@ export const likePost = async (req, res) => {
         let likedPost;
         let message = "";
 
-        const hasLiked = Array.isArray(post.likedPosts) && post.likedPosts.indexOf(user.userName) !== -1;
+        const userId = String(user._id);
+        const hasLiked = Array.isArray(post.likedPosts) && post.likedPosts.some((u) => String(u) === userId);
         if (hasLiked) {
             likedPost = await PostMessage.findByIdAndUpdate(
                 id,
                 {
-                    $pull: { likedPosts: user.userName },
-                    $inc: { likeCount: -1 },
+                    $pull: { likedPosts: userId },
                 },
                 { new: true }
             );
@@ -134,8 +134,7 @@ export const likePost = async (req, res) => {
             likedPost = await PostMessage.findByIdAndUpdate(
                 id,
                 {
-                    $addToSet: { likedPosts: user.userName },
-                    $inc: { likeCount: 1 },
+                    $addToSet: { likedPosts: userId },
                 },
                 { new: true }
             );

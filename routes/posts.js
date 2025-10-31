@@ -62,6 +62,27 @@ const router = express.Router();
  *                       type: integer
  *                 message:
  *                   type: string
+ *             examples:
+ *               success:
+ *                 summary: Example with derived likeCount
+ *                 value:
+ *                   posts:
+ *                     - _id: "671f0e2f9a3a123456789001"
+ *                       title: "First Post"
+ *                       message: "Hello world"
+ *                       creator: "123"
+ *                       tags: ["intro"]
+ *                       selectedFile: ""
+ *                       createdAt: "2025-10-31T18:30:00.000Z"
+ *                       likedPosts: ["671f0e2f9a3a1234567890aa", "671f0e2f9a3a1234567890ab"]
+ *                       likeCount: 2
+ *                       userName: "alice"
+ *                   pagination:
+ *                     total: 1
+ *                     page: 1
+ *                     pages: 1
+ *                     limit: 10
+ *                   message: "Fetched posts"
  *       401:
  *         description: Unauthorized
  */
@@ -110,6 +131,22 @@ router.get("/", verify, getPosts);
  *                   $ref: '#/components/schemas/PostMessage'
  *                 message:
  *                   type: string
+ *             examples:
+ *               created:
+ *                 summary: Example with derived likeCount
+ *                 value:
+ *                   post:
+ *                     _id: "671f0e2f9a3a123456789002"
+ *                     title: "New Post"
+ *                     message: "Content"
+ *                     creator: "123"
+ *                     tags: ["tag1", "tag2"]
+ *                     selectedFile: ""
+ *                     createdAt: "2025-10-31T18:30:00.000Z"
+ *                     likedPosts: []
+ *                     likeCount: 0
+ *                     userName: "alice"
+ *                   message: "Post created successfully"
  *       401:
  *         description: Unauthorized
  */
@@ -168,6 +205,22 @@ router.post("/", verify, validate(upsertPostSchema), createPost);
  *                   $ref: '#/components/schemas/PostMessage'
  *                 message:
  *                   type: string
+ *             examples:
+ *               updated:
+ *                 summary: Example with derived likeCount
+ *                 value:
+ *                   post:
+ *                     _id: "671f0e2f9a3a123456789003"
+ *                     title: "Updated title"
+ *                     message: "Updated content"
+ *                     creator: "123"
+ *                     tags: ["tag1"]
+ *                     selectedFile: ""
+ *                     createdAt: "2025-10-31T18:30:00.000Z"
+ *                     likedPosts: ["671f0e2f9a3a1234567890aa"]
+ *                     likeCount: 1
+ *                     userName: "alice"
+ *                   message: "Post updated successfully"
  *       400:
  *         description: Invalid id
  *       404:
@@ -254,6 +307,37 @@ router.delete("/:id", verify, deletePost);
  *                   $ref: '#/components/schemas/PostMessage'
  *                 message:
  *                   type: string
+ *             examples:
+ *               liked:
+ *                 summary: Example after like
+ *                 value:
+ *                   post:
+ *                     _id: "671f0e2f9a3a123456789003"
+ *                     title: "Updated title"
+ *                     message: "Updated content"
+ *                     creator: "123"
+ *                     tags: ["tag1"]
+ *                     selectedFile: ""
+ *                     createdAt: "2025-10-31T18:30:00.000Z"
+ *                     likedPosts: ["671f0e2f9a3a1234567890aa", "671f0e2f9a3a1234567890ab"]
+ *                     likeCount: 2
+ *                     userName: "alice"
+ *                   message: "Post liked"
+ *               unliked:
+ *                 summary: Example after unlike
+ *                 value:
+ *                   post:
+ *                     _id: "671f0e2f9a3a123456789003"
+ *                     title: "Updated title"
+ *                     message: "Updated content"
+ *                     creator: "123"
+ *                     tags: ["tag1"]
+ *                     selectedFile: ""
+ *                     createdAt: "2025-10-31T18:30:00.000Z"
+ *                     likedPosts: ["671f0e2f9a3a1234567890aa"]
+ *                     likeCount: 1
+ *                     userName: "alice"
+ *                   message: "Like removed from post"
  *       400:
  *         description: Invalid id
  *       404:
