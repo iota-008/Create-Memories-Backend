@@ -19,9 +19,13 @@ app.use(
         extended: true,
     })
 );
+const corsOrigins = (process.env.CORS_ORIGINS || "http://127.0.0.1:3000,https://create-your-memory.netlify.app")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
 app.use(
     cors( {
-        origin: ["http://127.0.0.1:3000", "https://create-your-memory.netlify.app"],
+        origin: corsOrigins,
     } )
 );
 app.use( "/user", userRoutes );
@@ -33,12 +37,29 @@ app.get( "/", ( req, res ) =>
 } );
 
 const PORT = process.env.PORT || 5000;
+let server;
 mongoose
     .connect( process.env.CONNECTION_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     } )
-    .then( () =>
-        app.listen( PORT, () => console.log( `server is runing on port ${ PORT }` ) )
-    )
+    .then( () => {
+        server = app.listen( PORT, () => console.log( `server is runing on port ${ PORT }` ) );
+    } )
     .catch( ( error ) => console.log( "error : ", error.message ) );
+
+const shutdown = (signal) => {
+    console.log(`\n${ signal } received, shutting down...`);
+    if (server) {
+        server.close(() => {
+            mongoose.connection.close(false).then(() => {
+                process.exit(0);
+            });
+        });
+    } else {
+        mongoose.connection.close(false).then(() => process.exit(0));
+    }
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
