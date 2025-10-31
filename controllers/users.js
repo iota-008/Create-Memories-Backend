@@ -36,7 +36,7 @@ export const registerUser = async (req, res) => {
         jsonwebtoken.sign(
             { _id: user._id, userName: user.userName },
             process.env.SECRET_KEY,
-            { expiresIn: "1h" },
+            { expiresIn: "1d" },
             (err, token) => {
                 if (err) {
                     return res.status(500).json({ message: "Failed to create access token" });
@@ -46,13 +46,14 @@ export const registerUser = async (req, res) => {
                     httpOnly: true,
                     secure: isProd,
                     sameSite: isProd ? "none" : "lax",
-                    maxAge: 60 * 60 * 1000,
+                    maxAge: 24 * 60 * 60 * 1000,
                 };
                 res.cookie("accessToken", token, cookieOptions);
                 return res.status(201).json({
                     success: true,
                     message: "Registration Successfull!",
                     accessToken: token,
+                    user: { _id: user._id, userName: user.userName, email: user.email },
                 });
             }
         );
@@ -87,7 +88,7 @@ export const loginUser = async (req, res) => {
         jsonwebtoken.sign(
             { _id: user._id, userName: user.userName },
             process.env.SECRET_KEY,
-            { expiresIn: "1h" },
+            { expiresIn: "1d" },
             (err, token) => {
                 if (err) {
                     return res.status(500).json({ message: "Failed to create access token" });
@@ -97,13 +98,14 @@ export const loginUser = async (req, res) => {
                     httpOnly: true,
                     secure: isProd,
                     sameSite: isProd ? "none" : "lax",
-                    maxAge: 60 * 60 * 1000,
+                    maxAge: 24 * 60 * 60 * 1000,
                 };
                 res.cookie("accessToken", token, cookieOptions);
                 return res.status(200).json({
                     success: true,
                     message: "LoggedIn successfully!",
                     accessToken: token,
+                    user: { _id: user._id, userName: user.userName, email: user.email },
                 });
             }
         );

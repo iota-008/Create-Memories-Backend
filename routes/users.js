@@ -52,6 +52,19 @@ const validate = (schema) => (req, res, next) => {
  *     responses:
  *       201:
  *         description: Registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 accessToken:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Validation error
  *       409:
@@ -83,6 +96,19 @@ routerUser.post("/register", validate(registerSchema), registerUser);
  *     responses:
  *       200:
  *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 accessToken:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Validation error
  *       401:
@@ -101,6 +127,13 @@ routerUser.post("/login", validate(loginSchema), loginUser);
  *     responses:
  *       200:
  *         description: Logged out successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 routerUser.post("/logout", logoutUser);
 

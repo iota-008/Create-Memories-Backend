@@ -40,6 +40,28 @@ const router = express.Router();
  *     responses:
  *       200:
  *         description: Paginated posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 posts:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PostMessage'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     pages:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  */
@@ -79,6 +101,15 @@ router.get("/", verify, getPosts);
  *     responses:
  *       201:
  *         description: Post created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 post:
+ *                   $ref: '#/components/schemas/PostMessage'
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  */
@@ -128,10 +159,26 @@ router.post("/", verify, validate(upsertPostSchema), createPost);
  *     responses:
  *       200:
  *         description: Post updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 post:
+ *                   $ref: '#/components/schemas/PostMessage'
+ *                 message:
+ *                   type: string
  *       400:
  *         description: Invalid id
  *       404:
  *         description: Not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  */
@@ -155,10 +202,26 @@ router.patch("/:id", verify, validate(upsertPostSchema.fork(["title","message"],
  *     responses:
  *       200:
  *         description: Post deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 message:
+ *                   type: string
  *       400:
  *         description: Invalid id
  *       404:
  *         description: Not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  */
@@ -182,10 +245,26 @@ router.delete("/:id", verify, deletePost);
  *     responses:
  *       200:
  *         description: Like toggled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 post:
+ *                   $ref: '#/components/schemas/PostMessage'
+ *                 message:
+ *                   type: string
  *       400:
  *         description: Invalid id
  *       404:
  *         description: Not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  */
