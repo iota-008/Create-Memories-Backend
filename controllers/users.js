@@ -41,6 +41,14 @@ export const registerUser = async (req, res) => {
                 if (err) {
                     return res.status(500).json({ message: "Failed to create access token" });
                 }
+                const isProd = process.env.NODE_ENV === "production";
+                const cookieOptions = {
+                    httpOnly: true,
+                    secure: isProd,
+                    sameSite: isProd ? "none" : "lax",
+                    maxAge: 60 * 60 * 1000,
+                };
+                res.cookie("accessToken", token, cookieOptions);
                 return res.status(201).json({
                     success: true,
                     message: "Registration Successfull!",
@@ -84,6 +92,14 @@ export const loginUser = async (req, res) => {
                 if (err) {
                     return res.status(500).json({ message: "Failed to create access token" });
                 }
+                const isProd = process.env.NODE_ENV === "production";
+                const cookieOptions = {
+                    httpOnly: true,
+                    secure: isProd,
+                    sameSite: isProd ? "none" : "lax",
+                    maxAge: 60 * 60 * 1000,
+                };
+                res.cookie("accessToken", token, cookieOptions);
                 return res.status(200).json({
                     success: true,
                     message: "LoggedIn successfully!",
@@ -100,6 +116,13 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
     try {
+        const isProd = process.env.NODE_ENV === "production";
+        const cookieOptions = {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
+        };
+        res.clearCookie("accessToken", cookieOptions);
         return res.status(200).json({ message: `Logged out Successfully` });
     } catch (error) {
         return res.status(500).json({

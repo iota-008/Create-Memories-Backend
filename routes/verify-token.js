@@ -2,8 +2,8 @@ import jsonwebtoken from "jsonwebtoken";
 
 export const verify = (req, res, next) => {
     const header = req.headers["authorization"] || req.headers["auth-token"];
-    let token = null;
-    if (header) {
+    let token = req.cookies && req.cookies["accessToken"] ? req.cookies["accessToken"] : null;
+    if (!token && header) {
         if (typeof header === "string" && header.toLowerCase().startsWith("bearer ")) {
             token = header.slice(7).trim();
         } else if (typeof header === "string") {
