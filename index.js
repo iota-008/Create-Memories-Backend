@@ -10,6 +10,8 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean";
 import morgan from "morgan";
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 const app = express();
 dotenv.config();
 app.use( cookieParser() );
@@ -66,6 +68,34 @@ app.get( "/", ( req, res ) =>
 {
     res.send( "Welcome to memories API" );
 } );
+
+// Swagger/OpenAPI setup
+const swaggerDefinition = {
+    openapi: "3.0.0",
+    info: {
+        title: "Memories API",
+        version: "1.0.0",
+    },
+    servers: [
+        { url: `http://localhost:${ process.env.PORT || 5000 }` },
+    ],
+    components: {
+        securitySchemes: {
+            bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
+            cookieAuth: { type: "apiKey", in: "cookie", name: "accessToken" },
+        },
+    },
+};
+const swaggerOptions = {
+    swaggerDefinition,
+    apis: [
+        "./routes/*.js",
+        "./controllers/*.js",
+        "./models/*.js",
+    ],
+};
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
 app.use((req, res, next) => {

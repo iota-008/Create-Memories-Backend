@@ -10,3 +10,22 @@ const userSchema = new mongoose.Schema({
 var Users = mongoose.model("Users", userSchema);
 
 export default Users;
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         userName:
+ *           type: string
+ *         email:
+ *           type: string
+ *           format: email
+ *         accountCreatedAt:
+ *           type: string
+ *           format: date-time
+ */
