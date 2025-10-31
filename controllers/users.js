@@ -3,6 +3,8 @@ import Users from "../models/Users.js";
 import bcrypt from "bcrypt";
 import jsonwebtoken from "jsonwebtoken";
 
+
+
 export const registerUser = async (req, res) => {
 	// hash password
 	const salt = await bcrypt.genSalt(10);

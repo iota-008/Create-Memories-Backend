@@ -1,137 +1,150 @@
 import PostMessage from "../models/PostMessage.js";
-import jsonwebtoken from "jsonwebtoken";
 import mongoose from "mongoose";
+
+
+
 export const getPosts = async (req, res) => {
-	try {
-		const posts = await PostMessage.find();
-		return res.status(200).json({ posts, message: "Fetched all posts" });
-	} catch (error) {
-		return res.status(500).json({
-			message: error.message,
-		});
-	}
+    try {
+        const page = Math.max(parseInt(req.query.page || "1", 10), 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit || "10", 10), 1), 100);
+        const sort = req.query.sort || "-createdAt"; // default newest first
+
+        const [total, posts] = await Promise.all([
+            PostMessage.countDocuments({}),
+            PostMessage.find({}).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+        ]);
+
+        return res.status(200).json({
+            posts,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit) || 1,
+                limit,
+            },
+            message: "Fetched posts",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message,
+        });
+    }
 };
 
 export const createPost = async (req, res) => {
-	const { title, message, selectedFile, creator, tags, userName } = req.body;
-	const newPostMessage = await new PostMessage({
-		title,
-		message,
-		selectedFile,
-		creator,
-		tags,
-		userName,
-	});
+    const { title, message, selectedFile, creator, tags, userName } = req.body;
+    const newPostMessage = await new PostMessage({
+        title,
+        message,
+        selectedFile,
+        creator,
+        tags,
+        userName,
+    });
 
-	try {
-		await newPostMessage.save();
-		return res
-			.status(201)
-			.json({ post: newPostMessage, message: "Post created successfully" });
-	} catch (error) {
-		return res.status(500).json({
-			message: error.message,
-		});
-	}
+    try {
+        await newPostMessage.save();
+        return res
+            .status(201)
+            .json({ post: newPostMessage, message: "Post created successfully" });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message,
+        });
+    }
 };
 
 export const updatePost = async (req, res) => {
-	const { id } = req.params;
-	const { title, message, creator, selectedFile, tags, userName } = req.body;
+    const { id } = req.params;
+    const { title, message, creator, selectedFile, tags, userName } = req.body;
 
-	try {
-		if (!mongoose.Types.ObjectId.isValid(id))
-			return res.status(400).json({ message: id + " is invalid mongoDB id" });
+    try {
+        if (!mongoose.Types.ObjectId.isValid(id))
+            return res.status(400).json({ message: id + " is invalid mongoDB id" });
 
-		const updatedPost = {
-			creator,
-			title,
-			message,
-			tags,
-			selectedFile,
-			userName,
-			_id: id,
-		};
-		await PostMessage.findByIdAndUpdate(id, updatedPost, {
-			new: true,
-		});
+        const updatedPost = await PostMessage.findByIdAndUpdate(
+            id,
+            { creator, title, message, tags, selectedFile, userName },
+            { new: true }
+        );
 
-		return res
-			.status(200)
-			.json({ post: updatedPost, message: "Post updated successfully" });
-	} catch (error) {
-		return res.status(500).json({
-			message: error.message,
-		});
-	}
+        if (!updatedPost) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        return res.status(200).json({ post: updatedPost, message: "Post updated successfully" });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message,
+        });
+    }
 };
+
 export const deletePost = async (req, res) => {
-	const { id } = req.params;
+    const { id } = req.params;
 
-	try {
-		if (!mongoose.Types.ObjectId.isValid(id))
-			return res.status(400).json({ message: id + " is invalid mongoDB id" });
+    try {
+        if (!mongoose.Types.ObjectId.isValid(id))
+            return res.status(400).json({ message: id + " is invalid mongoDB id" });
 
-		await PostMessage.findByIdAndRemove(id);
-		return res
-			.status(200)
-			.json({ id: id, message: `Post Deleted Successfully` });
-	} catch (error) {
-		return res.status(500).json({
-			message: error.message,
-		});
-	}
+        const deleted = await PostMessage.findByIdAndDelete(id);
+        if (!deleted) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+        return res.status(200).json({ id: id, message: `Post Deleted Successfully` });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message,
+        });
+    }
 };
 
 export const likePost = async (req, res) => {
-	const { id } = req.params;
+    const { id } = req.params;
 
-	try {
-		if (!mongoose.Types.ObjectId.isValid(id))
-			return res.status(400).json({ message: id + " is invalid mongoDB id" });
+    try {
+        if (!mongoose.Types.ObjectId.isValid(id))
+            return res.status(400).json({ message: id + " is invalid mongoDB id" });
 
-		const authHeader = req.headers["auth-token"];
-		const token = authHeader && authHeader.split(" ")[1];
+        const user = req.user; // set by verify middleware
+        if (!user || !user.userName) {
+            return res.status(401).json({ message: "Access Denied, Please sign-in again" });
+        }
 
-		if (!token)
-			return res
-				.status(401)
-				.json({ message: "Access Denied, Please sign-in again" });
+        const post = await PostMessage.findById(id).lean();
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
 
-		const user = jsonwebtoken.verify(token, process.env.SECRET_KEY);
+        let likedPost;
+        let message = "";
 
-		const post = await PostMessage.findById(id);
-
-		let likedPost;
-		let message = "";
-
-		if (post.likedPosts.indexOf(user.userName) != -1) {
-			likedPost = await PostMessage.findByIdAndUpdate(
-				id,
-				{
-					likeCount: post.likeCount - 1,
-					likedPosts: post.likedPosts.filter(
-						(userName) => userName !== user.userName
-					),
-				},
-				{ new: true }
-			);
-			message = "Like removed from post";
-		} else {
-			likedPost = await PostMessage.findByIdAndUpdate(
-				id,
-				{
-					likeCount: post.likeCount + 1,
-					likedPosts: [...post.likedPosts, user.userName],
-				},
-				{ new: true }
-			);
-			message = "Post liked";
-		}
-		return res.status(200).json({ post: likedPost, message: message });
-	} catch (error) {
-		return res.status(500).json({
-			message: error.message,
-		});
-	}
+        const hasLiked = Array.isArray(post.likedPosts) && post.likedPosts.indexOf(user.userName) !== -1;
+        if (hasLiked) {
+            likedPost = await PostMessage.findByIdAndUpdate(
+                id,
+                {
+                    $pull: { likedPosts: user.userName },
+                    $inc: { likeCount: -1 },
+                },
+                { new: true }
+            );
+            message = "Like removed from post";
+        } else {
+            likedPost = await PostMessage.findByIdAndUpdate(
+                id,
+                {
+                    $addToSet: { likedPosts: user.userName },
+                    $inc: { likeCount: 1 },
+                },
+                { new: true }
+            );
+            message = "Post liked";
+        }
+        return res.status(200).json({ post: likedPost, message: message });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message,
+        });
+    }
 };
