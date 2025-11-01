@@ -5,11 +5,111 @@ import PostMessage from "../models/PostMessage.js";
 import Comment from "../models/Comment.js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import qs from "querystring";
+
+// Google OAuth helpers (top-level)
+const googleAuthURL = () => {
+    const root = "https://accounts.google.com/o/oauth2/v2/auth";
+    const params = new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+        response_type: "code",
+        scope: ["openid", "email", "profile"].join(" "),
+        include_granted_scopes: "true",
+        access_type: "offline",
+        prompt: "consent",
+    });
+    return `${root}?${params.toString()}`;
+};
+
+export const startGoogleOAuth = async (_req, res) => {
+    try {
+        const url = googleAuthURL();
+        return res.redirect(url);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const googleOAuthCallback = async (req, res) => {
+    try {
+        const code = req.query.code;
+        if (!code) return res.status(400).json({ message: "Missing code" });
+
+        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                code,
+                client_id: process.env.GOOGLE_CLIENT_ID,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+                grant_type: "authorization_code",
+            }),
+        });
+        if (!tokenRes.ok) {
+            const text = await tokenRes.text();
+            return res.status(400).send(text);
+        }
+        const tokens = await tokenRes.json();
+        const accessToken = tokens.access_token;
+        if (!accessToken) return res.status(400).json({ message: "Failed to obtain access token" });
+
+        const profRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!profRes.ok) {
+            const text = await profRes.text();
+            return res.status(400).send(text);
+        }
+        const profile = await profRes.json();
+        const email = profile.email;
+        let name = profile.name || (email ? email.split("@")[0] : "user");
+        if (!email) return res.status(400).json({ message: "Email not available from Google" });
+
+        let user = await Users.findOne({ email });
+        if (!user) {
+            let userName = name.replace(/\s+/g, "").toLowerCase();
+            if (!userName) userName = email.split("@")[0];
+            let suffix = 0;
+            while (await Users.findOne({ userName })) {
+                suffix += 1;
+                userName = `${name.replace(/\s+/g, "").toLowerCase()}${suffix}`;
+            }
+            const salt = await bcrypt.genSalt(10);
+            const randomPass = crypto.randomBytes(16).toString("hex");
+            const hashedPassword = await bcrypt.hash(randomPass, salt);
+            user = await Users.create({ userName, email, password: hashedPassword });
+        }
+
+        const expiresIn = "30d";
+        jsonwebtoken.sign(
+            { _id: user._id, userName: user.userName },
+            process.env.SECRET_KEY,
+            { expiresIn },
+            (err, token) => {
+                if (err) return res.status(500).json({ message: "Failed to create access token" });
+                const isProd = process.env.NODE_ENV === "production";
+                const cookieOptions = {
+                    httpOnly: true,
+                    secure: isProd,
+                    sameSite: isProd ? "none" : "lax",
+                    maxAge: 30 * 24 * 60 * 60 * 1000,
+                };
+                res.cookie("accessToken", token, cookieOptions);
+                const frontend = (process.env.FRONTEND_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
+                const redirectUrl = `${frontend}/auth/login?oauth=1&token=${encodeURIComponent(token)}`;
+                return res.redirect(redirectUrl);
+            }
+        );
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
 
 export const registerUser = async (req, res) => {
     try {
         const { userName, email, password, remember } = req.body || {};
-
         if (!userName || !email || !password) {
             return res.status(400).json({ message: "userName, email and password are required" });
         }

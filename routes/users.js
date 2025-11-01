@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser, logoutUser, getMyBookmarks, requestPasswordReset, resetPassword } from "../controllers/users.js";
+import { registerUser, loginUser, logoutUser, getMyBookmarks, requestPasswordReset, resetPassword, startGoogleOAuth, googleOAuthCallback } from "../controllers/users.js";
 import Joi from "joi";
 import { verify } from "./verify-token.js";
 import cors from "cors";
@@ -129,6 +129,10 @@ routerUser.post("/register", validate(registerSchema), registerUser);
  *         description: Too many login attempts
  */
 routerUser.post("/login", validate(loginSchema), loginUser);
+
+// Google OAuth
+routerUser.get("/oauth/google/start", startGoogleOAuth);
+routerUser.get("/oauth/google/callback", googleOAuthCallback);
 
 // Apply per-route CORS to guarantee headers on preflight and requests
 const allowlist = (process.env.CORS_ORIGINS || "http://127.0.0.1:3000,http://localhost:3000,https://create-your-memory.netlify.app")
