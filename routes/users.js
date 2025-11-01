@@ -189,10 +189,16 @@ routerUser.post("/logout", logoutUser);
  *                 user:
  *                   $ref: '#/components/schemas/User'
  */
-routerUser.get("/me", verify, (req, res) => {
+routerUser.get("/me", verify, async (req, res) => {
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
-    return res.status(200).json({ user: { _id: user._id, userName: user.userName, email: user.email } });
+    try {
+        const doc = await (await import("../models/Users.js")).default.findById(user._id).select("userName email bookmarks").lean();
+        if (!doc) return res.status(404).json({ message: "User not found" });
+        return res.status(200).json({ user: { _id: String(user._id), userName: doc.userName, email: doc.email, bookmarks: (doc.bookmarks || []).map(String) } });
+    } catch (e) {
+        return res.status(500).json({ message: e.message });
+    }
 });
 
 /**
