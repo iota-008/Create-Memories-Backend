@@ -5,11 +5,25 @@ import {
   createPost,
   updatePost,
   deletePost,
-  likePost,
+  reactToPost,
+  getPostById,
+  searchPosts,
+  addBookmark,
+  removeBookmark,
 } from "../controllers/posts.js";
 import Joi from "joi";
+import rateLimit from "express-rate-limit";
 
 const router = express.Router();
+
+// Per-user limiter for write endpoints
+const userWriteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req, _res) => (req.user && req.user._id ? String(req.user._id) : req.ip),
+});
 
 /**
  * @openapi
@@ -235,7 +249,7 @@ router.post("/", verify, validate(upsertPostSchema), createPost);
  *       401:
  *         description: Unauthorized
  */
-router.patch("/:id", verify, validate(upsertPostSchema.fork(["title","message"], (s)=>s.optional())), updatePost);
+router.patch("/:id", verify, userWriteLimiter, validate(upsertPostSchema.fork(["title","message"], (s)=>s.optional())), updatePost);
 
 /**
  * @openapi
@@ -278,13 +292,92 @@ router.patch("/:id", verify, validate(upsertPostSchema.fork(["title","message"],
  *       401:
  *         description: Unauthorized
  */
-router.delete("/:id", verify, deletePost);
+router.delete("/:id", verify, userWriteLimiter, deletePost);
 
 /**
  * @openapi
- * /posts/{id}/likePost:
+ * /posts/{id}:
+ *   get:
+ *     summary: Get a single post by id with counts and comments preview
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: preview
+ *         schema:
+ *           type: integer
+ *           description: Number of latest comments to include (default 3, max 10)
+ *     responses:
+ *       200:
+ *         description: Post with preview comments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 post:
+ *                   $ref: '#/components/schemas/PostMessage'
+ *                 commentsPreview:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Comment'
+ */
+router.get("/:id", verify, getPostById);
+
+// React to a post
+const reactSchema = Joi.object({ type: Joi.string().max(64).allow("") });
+/**
+ * @openapi
+ * /posts/{id}/react:
  *   patch:
- *     summary: Toggle like on a post
+ *     summary: Set or clear a reaction on a post
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 description: Reaction type (e.g., "like", "love", "🎉"). Empty string removes reaction.
+ *     responses:
+ *       200:
+ *         description: Reaction updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 post:
+ *                   $ref: '#/components/schemas/PostMessage'
+ *                 message:
+ *                   type: string
+ */
+router.patch("/:id/react", verify, userWriteLimiter, validate(reactSchema), reactToPost);
+
+/**
+ * @openapi
+ * /posts/{id}/bookmark:
+ *   post:
+ *     summary: Add bookmark to a post
  *     tags: [Posts]
  *     security:
  *       - cookieAuth: []
@@ -297,61 +390,76 @@ router.delete("/:id", verify, deletePost);
  *           type: string
  *     responses:
  *       200:
- *         description: Like toggled
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 post:
- *                   $ref: '#/components/schemas/PostMessage'
- *                 message:
- *                   type: string
- *             examples:
- *               liked:
- *                 summary: Example after like
- *                 value:
- *                   post:
- *                     _id: "671f0e2f9a3a123456789003"
- *                     title: "Updated title"
- *                     message: "Updated content"
- *                     creator: "123"
- *                     tags: ["tag1"]
- *                     selectedFile: ""
- *                     createdAt: "2025-10-31T18:30:00.000Z"
- *                     likedPosts: ["671f0e2f9a3a1234567890aa", "671f0e2f9a3a1234567890ab"]
- *                     likeCount: 2
- *                     userName: "alice"
- *                   message: "Post liked"
- *               unliked:
- *                 summary: Example after unlike
- *                 value:
- *                   post:
- *                     _id: "671f0e2f9a3a123456789003"
- *                     title: "Updated title"
- *                     message: "Updated content"
- *                     creator: "123"
- *                     tags: ["tag1"]
- *                     selectedFile: ""
- *                     createdAt: "2025-10-31T18:30:00.000Z"
- *                     likedPosts: ["671f0e2f9a3a1234567890aa"]
- *                     likeCount: 1
- *                     userName: "alice"
- *                   message: "Like removed from post"
- *       400:
- *         description: Invalid id
- *       404:
- *         description: Not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       401:
- *         description: Unauthorized
+ *         description: Bookmarked
+ *   delete:
+ *     summary: Remove bookmark from a post
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bookmark removed
  */
-router.patch("/:id/likePost", verify, likePost);
+router.post("/:id/bookmark", verify, userWriteLimiter, addBookmark);
+router.delete("/:id/bookmark", verify, userWriteLimiter, removeBookmark);
+
+/**
+ * @openapi
+ * /posts/search:
+ *   get:
+ *     summary: Search and filter posts
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *           description: Comma-separated list
+ *       - in: query
+ *         name: author
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [createdAt, -createdAt, likeCount, commentCount, trending]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Search results
+ */
+router.get("/search", verify, searchPosts);
 
 export default router;

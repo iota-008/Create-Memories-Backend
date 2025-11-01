@@ -1,11 +1,13 @@
-import mongoose from "mongoose";
 import Users from "../models/Users.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jsonwebtoken from "jsonwebtoken";
+import PostMessage from "../models/PostMessage.js";
+import Comment from "../models/Comment.js";
 
 export const registerUser = async (req, res) => {
     try {
         const { userName, email, password } = req.body || {};
+
         if (!userName || !email || !password) {
             return res.status(400).json({ message: "userName, email and password are required" });
         }
@@ -66,6 +68,60 @@ export const registerUser = async (req, res) => {
         return res.status(500).json({
             message: error.message,
         });
+    }
+};
+
+export const getMyBookmarks = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user || !user._id) {
+            return res.status(401).json({ message: "Access Denied, Please sign-in again" });
+        }
+
+        const page = Math.max(parseInt(req.query.page || "1", 10), 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit || "10", 10), 1), 100);
+
+        const me = await Users.findById(user._id).select("bookmarks").lean();
+        const bookmarks = me?.bookmarks || [];
+        const total = bookmarks.length;
+
+        if (total === 0) {
+            return res.status(200).json({
+                posts: [],
+                pagination: { total: 0, page, pages: 1, limit },
+                message: "No bookmarks",
+            });
+        }
+
+        const ids = bookmarks.map((id) => id);
+        const posts = await PostMessage.find({ _id: { $in: ids } })
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean({ virtuals: true });
+
+        const postIds = posts.map((p) => p._id);
+        const commentCounts = postIds.length
+            ? await Comment.aggregate([
+                  { $match: { postId: { $in: postIds } } },
+                  { $group: { _id: "$postId", count: { $sum: 1 } } },
+              ])
+            : [];
+        const countMap = new Map(commentCounts.map((c) => [String(c._id), c.count]));
+        const postsWithCounts = posts.map((p) => ({ ...p, commentCount: countMap.get(String(p._id)) || 0 }));
+
+        return res.status(200).json({
+            posts: postsWithCounts,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit) || 1,
+                limit,
+            },
+            message: "Fetched bookmarks",
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
 };
 

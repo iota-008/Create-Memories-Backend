@@ -12,7 +12,13 @@ const postSchema = new mongoose.Schema(
             type: Date,
             default: new Date(),
         },
-        likedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Users" }],
+        // reactions: one per user with type string (emoji or label)
+        reactions: [
+            {
+                user: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
+                type: { type: String, required: true, trim: true },
+            },
+        ],
         userName: {
             type: String,
         },
@@ -23,13 +29,17 @@ const postSchema = new mongoose.Schema(
     }
 );
 
-// virtual likeCount derived from likedPosts length
+// likeCount derived from reactions of type 'like'
 postSchema.virtual("likeCount").get(function () {
-    return Array.isArray(this.likedPosts) ? this.likedPosts.length : 0;
+    if (!Array.isArray(this.reactions)) return 0;
+    return this.reactions.reduce((acc, r) => (r && r.type === "like" ? acc + 1 : acc), 0);
 });
 
-// index for faster analytics/queries by liked user
-postSchema.index({ likedPosts: 1 });
+// indexes for reactions lookups
+postSchema.index({ "reactions.user": 1 });
+postSchema.index({ "reactions.type": 1 });
+// text index for full-text search on title and message
+postSchema.index({ title: "text", message: "text" });
 
 // enable virtuals for lean queries
 postSchema.plugin(mongooseLeanVirtuals);

@@ -5,7 +5,11 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     accountCreatedAt: { type: Date, default: new Date() },
+    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "PostMessage" }],
 });
+
+// index for bookmarks lookups
+userSchema.index({ bookmarks: 1 });
 
 var Users = mongoose.model("Users", userSchema);
 
@@ -28,4 +32,8 @@ export default Users;
  *         accountCreatedAt:
  *           type: string
  *           format: date-time
+ *         bookmarks:
+ *           type: array
+ *           items:
+ *             type: string
  */
