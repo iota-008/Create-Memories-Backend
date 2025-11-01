@@ -1,4 +1,5 @@
 import PostMessage from "../models/PostMessage.js";
+import Comment from "../models/Comment.js";
 import mongoose from "mongoose";
 
 
@@ -14,8 +15,18 @@ export const getPosts = async (req, res) => {
             PostMessage.find({}).sort(sort).skip((page - 1) * limit).limit(limit).lean({ virtuals: true }),
         ]);
 
+        const postIds = posts.map((p) => p._id);
+        const commentCounts = postIds.length
+            ? await Comment.aggregate([
+                  { $match: { postId: { $in: postIds } } },
+                  { $group: { _id: "$postId", count: { $sum: 1 } } },
+              ])
+            : [];
+        const countMap = new Map(commentCounts.map((c) => [String(c._id), c.count]));
+        const postsWithCounts = posts.map((p) => ({ ...p, commentCount: countMap.get(String(p._id)) || 0 }));
+
         return res.status(200).json({
-            posts,
+            posts: postsWithCounts,
             pagination: {
                 total,
                 page,
@@ -72,7 +83,13 @@ export const updatePost = async (req, res) => {
             return res.status(404).json({ message: "Post not found" });
         }
 
-        return res.status(200).json({ post: updatedPost, message: "Post updated successfully" });
+        // attach commentCount
+        const agg = await Comment.aggregate([
+            { $match: { postId: mongoose.Types.ObjectId(id) } },
+            { $group: { _id: "$postId", count: { $sum: 1 } } },
+        ]);
+        const commentCount = agg.length ? agg[0].count : 0;
+        return res.status(200).json({ post: { ...updatedPost.toObject?.() || updatedPost, commentCount }, message: "Post updated successfully" });
     } catch (error) {
         return res.status(500).json({
             message: error.message,
@@ -140,7 +157,13 @@ export const likePost = async (req, res) => {
             );
             message = "Post liked";
         }
-        return res.status(200).json({ post: likedPost, message: message });
+        // attach commentCount
+        const agg = await Comment.aggregate([
+            { $match: { postId: mongoose.Types.ObjectId(id) } },
+            { $group: { _id: "$postId", count: { $sum: 1 } } },
+        ]);
+        const commentCount = agg.length ? agg[0].count : 0;
+        return res.status(200).json({ post: { ...likedPost.toObject?.() || likedPost, commentCount }, message });
     } catch (error) {
         return res.status(500).json({
             message: error.message,

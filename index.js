@@ -1,5 +1,6 @@
 import postRoutes from "./routes/posts.js";
 import userRoutes from "./routes/users.js";
+import commentRoutes from "./routes/comments.js";
 import mongoose from "mongoose";
 import express from "express";
 import dotenv from "dotenv";
@@ -63,6 +64,7 @@ const loginLimiter = rateLimit({
 app.use("/user/login", loginLimiter);
 app.use( "/user", userRoutes );
 app.use( "/posts", postRoutes );
+app.use( "/comments", commentRoutes );
 
 app.get( "/", ( req, res ) =>
 {
@@ -83,6 +85,20 @@ const swaggerDefinition = {
         securitySchemes: {
             bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
             cookieAuth: { type: "apiKey", in: "cookie", name: "accessToken" },
+        },
+        schemas: {
+            Comment: {
+                type: "object",
+                properties: {
+                    _id: { type: "string" },
+                    postId: { type: "string" },
+                    author: { type: "string" },
+                    userName: { type: "string" },
+                    content: { type: "string" },
+                    createdAt: { type: "string", format: "date-time" },
+                    updatedAt: { type: "string", format: "date-time" },
+                },
+            },
         },
     },
 };
