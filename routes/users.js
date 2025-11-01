@@ -1,6 +1,7 @@
 import express from "express";
-import { registerUser, loginUser, logoutUser } from "../controllers/users.js";
+import { registerUser, loginUser, logoutUser, getMyBookmarks } from "../controllers/users.js";
 import Joi from "joi";
+import { verify } from "./verify-token.js";
 
 const routerUser = express.Router();
 
@@ -136,5 +137,75 @@ routerUser.post("/login", validate(loginSchema), loginUser);
  *                   type: string
  */
 routerUser.post("/logout", logoutUser);
+
+/**
+ * @openapi
+ * /user/me:
+ *   get:
+ *     summary: Get current authenticated user profile
+ *     tags: [Auth]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ */
+routerUser.get("/me", verify, (req, res) => {
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    return res.status(200).json({ user: { _id: user._id, userName: user.userName, email: user.email } });
+});
+
+/**
+ * @openapi
+ * /user/me/bookmarks:
+ *   get:
+ *     summary: Get paginated list of current user's bookmarked posts
+ *     tags: [Auth]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Bookmarked posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 posts:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PostMessage'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     pages:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ */
+routerUser.get("/me/bookmarks", verify, getMyBookmarks);
 
 export default routerUser;

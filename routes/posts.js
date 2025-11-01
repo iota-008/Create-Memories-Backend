@@ -12,7 +12,7 @@ import {
   removeBookmark,
 } from "../controllers/posts.js";
 import Joi from "joi";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ const userWriteLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, _res) => (req.user && req.user._id ? String(req.user._id) : req.ip),
+  keyGenerator: (req, _res) => (req.user && req.user._id ? String(req.user._id) : ipKeyGenerator(req)),
 });
 
 /**
