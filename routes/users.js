@@ -3,6 +3,7 @@ import { registerUser, loginUser, logoutUser, getMyBookmarks, requestPasswordRes
 import Joi from "joi";
 import { verify } from "./verify-token.js";
 import cors from "cors";
+import { CORS_ORIGINS } from "../config.js";
 
 const routerUser = express.Router();
 
@@ -135,10 +136,12 @@ routerUser.get("/oauth/google/start", startGoogleOAuth);
 routerUser.get("/oauth/google/callback", googleOAuthCallback);
 
 // Apply per-route CORS to guarantee headers on preflight and requests
-const allowlist = (process.env.CORS_ORIGINS || "http://127.0.0.1:3000,http://localhost:3000,https://create-your-memory.netlify.app")
-  .split(",").map((o)=>o.trim()).filter(Boolean);
 const routeCors = cors({
-  origin: true, // reflect request origin
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow non-browser clients
+    if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
   allowedHeaders: ["Content-Type","Authorization","auth-token","Accept","Origin","X-Requested-With"],
   methods: ["GET","HEAD","PUT","PATCH","POST","DELETE","OPTIONS"],

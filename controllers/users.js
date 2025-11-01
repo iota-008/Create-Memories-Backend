@@ -9,23 +9,33 @@ import qs from "querystring";
 import { IS_PROD, FRONTEND_URL, SECRET_KEY, GOOGLE } from "../config.js";
 
 // Google OAuth helpers (top-level)
-const googleAuthURL = () => {
+const googleAuthURL = (state) => {
     const root = "https://accounts.google.com/o/oauth2/v2/auth";
     const params = new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+        client_id: GOOGLE.CLIENT_ID,
+        redirect_uri: GOOGLE.REDIRECT_URI,
         response_type: "code",
         scope: ["openid", "email", "profile"].join(" "),
         include_granted_scopes: "true",
         access_type: "offline",
         prompt: "consent",
+        state,
     });
     return `${root}?${params.toString()}`;
 };
 
 export const startGoogleOAuth = async (_req, res) => {
     try {
-        const url = googleAuthURL();
+        // CSRF state
+        const state = crypto.randomBytes(16).toString("hex");
+        const cookieOptions = {
+            httpOnly: true,
+            secure: IS_PROD,
+            sameSite: IS_PROD ? "none" : "lax",
+            maxAge: 10 * 60 * 1000, // 10 minutes
+        };
+        res.cookie("oauth_state", state, cookieOptions);
+        const url = googleAuthURL(state);
         return res.redirect(url);
     } catch (error) {
         return res.status(500).json({ message: error.message });
@@ -35,7 +45,15 @@ export const startGoogleOAuth = async (_req, res) => {
 export const googleOAuthCallback = async (req, res) => {
     try {
         const code = req.query.code;
+        const state = req.query.state;
         if (!code) return res.status(400).json({ message: "Missing code" });
+        // Verify state from cookie
+        const cookieState = req.cookies && req.cookies.oauth_state;
+        if (!state || !cookieState || state !== cookieState) {
+            return res.status(400).json({ message: "Invalid OAuth state" });
+        }
+        // Clear state cookie
+        res.clearCookie("oauth_state", { httpOnly: true, secure: IS_PROD, sameSite: IS_PROD ? "none" : "lax" });
 
         const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
             method: "POST",

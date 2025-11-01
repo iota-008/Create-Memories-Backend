@@ -1,4 +1,6 @@
 import express from "express";
+import cors from "cors";
+import { CORS_ORIGINS } from "../config.js";
 import { verify } from "./verify-token.js";
 import {
   getPosts,
@@ -15,6 +17,20 @@ import Joi from "joi";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 const router = express.Router();
+
+// Tight CORS for posts router
+const routeCors = cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  allowedHeaders: ["Content-Type","Authorization","auth-token","Accept","Origin","X-Requested-With"],
+  methods: ["GET","HEAD","PUT","PATCH","POST","DELETE","OPTIONS"],
+  optionsSuccessStatus: 204,
+});
+router.use(routeCors);
 
 // Per-user limiter for write endpoints
 const userWriteLimiter = rateLimit({
