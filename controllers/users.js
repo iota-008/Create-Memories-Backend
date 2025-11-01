@@ -50,7 +50,8 @@ export const googleOAuthCallback = async (req, res) => {
         // Verify state from cookie
         const cookieState = req.cookies && req.cookies.oauth_state;
         if (!state || !cookieState || state !== cookieState) {
-            return res.status(400).json({ message: "Invalid OAuth state" });
+            const redirectUrl = `${FRONTEND_URL}/auth/login?oauth=0&error=state`;
+            return res.redirect(redirectUrl);
         }
         // Clear state cookie
         res.clearCookie("oauth_state", { httpOnly: true, secure: IS_PROD, sameSite: IS_PROD ? "none" : "lax" });
@@ -67,8 +68,7 @@ export const googleOAuthCallback = async (req, res) => {
             }),
         });
         if (!tokenRes.ok) {
-            const text = await tokenRes.text();
-            return res.status(400).send(text);
+            return res.redirect(`${FRONTEND_URL}/auth/login?oauth=0&error=token`);
         }
         const tokens = await tokenRes.json();
         const accessToken = tokens.access_token;
@@ -78,8 +78,7 @@ export const googleOAuthCallback = async (req, res) => {
             headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!profRes.ok) {
-            const text = await profRes.text();
-            return res.status(400).send(text);
+            return res.redirect(`${FRONTEND_URL}/auth/login?oauth=0&error=profile`);
         }
         const profile = await profRes.json();
         const email = profile.email;
