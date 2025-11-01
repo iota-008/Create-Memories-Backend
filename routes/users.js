@@ -1,7 +1,8 @@
 import express from "express";
-import { registerUser, loginUser, logoutUser, getMyBookmarks } from "../controllers/users.js";
+import { registerUser, loginUser, logoutUser, getMyBookmarks, requestPasswordReset, resetPassword } from "../controllers/users.js";
 import Joi from "joi";
 import { verify } from "./verify-token.js";
+import cors from "cors";
 
 const routerUser = express.Router();
 
@@ -13,6 +14,16 @@ const registerSchema = Joi.object({
 
 const loginSchema = Joi.object({
     email: Joi.string().email().max(254).required(),
+    password: Joi.string().min(6).max(128).required(),
+    remember: Joi.boolean().optional(),
+});
+
+// Forgot/Reset password
+const forgotSchema = Joi.object({
+    email: Joi.string().email().max(254).required(),
+});
+const resetSchema = Joi.object({
+    token: Joi.string().min(10).required(),
     password: Joi.string().min(6).max(128).required(),
 });
 
@@ -118,6 +129,22 @@ routerUser.post("/register", validate(registerSchema), registerUser);
  *         description: Too many login attempts
  */
 routerUser.post("/login", validate(loginSchema), loginUser);
+
+// Apply per-route CORS to guarantee headers on preflight and requests
+const allowlist = (process.env.CORS_ORIGINS || "http://127.0.0.1:3000,http://localhost:3000,https://create-your-memory.netlify.app")
+  .split(",").map((o)=>o.trim()).filter(Boolean);
+const routeCors = cors({
+  origin: true, // reflect request origin
+  credentials: true,
+  allowedHeaders: ["Content-Type","Authorization","auth-token","Accept","Origin","X-Requested-With"],
+  methods: ["GET","HEAD","PUT","PATCH","POST","DELETE","OPTIONS"],
+  optionsSuccessStatus: 204,
+});
+
+routerUser.options("/forgot", routeCors);
+routerUser.options("/reset", routeCors);
+routerUser.post("/forgot", routeCors, validate(forgotSchema), requestPasswordReset);
+routerUser.post("/reset", routeCors, validate(resetSchema), resetPassword);
 
 /**
  * @openapi

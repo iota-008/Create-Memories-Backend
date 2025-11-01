@@ -27,16 +27,49 @@ app.use(
         extended: true,
     })
 );
-const corsOrigins = (process.env.CORS_ORIGINS || "http://127.0.0.1:3000,https://create-your-memory.netlify.app")
+const corsOrigins = (process.env.CORS_ORIGINS || "http://127.0.0.1:3000,http://localhost:3000,https://create-your-memory.netlify.app")
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean);
-app.use(
-    cors( {
-        origin: corsOrigins,
-        credentials: true,
-    } )
-);
+
+// Ensure CORS headers are always present, even on errors
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (!origin || corsOrigins.includes(origin)) {
+        if (origin) {
+            res.header("Access-Control-Allow-Origin", origin);
+            res.header("Vary", "Origin");
+        }
+        res.header("Access-Control-Allow-Credentials", "true");
+        res.header(
+            "Access-Control-Allow-Headers",
+            "Content-Type, Authorization, auth-token, Accept, Origin, X-Requested-With"
+        );
+        res.header(
+            "Access-Control-Allow-Methods",
+            "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"
+        );
+        if (req.method === "OPTIONS") return res.sendStatus(204);
+    }
+    return next();
+});
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // allow non-browser requests (no origin) and any origin in the allowlist
+        if (!origin || corsOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error("Not allowed by CORS: " + origin));
+    },
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "auth-token", "Accept", "Origin", "X-Requested-With"],
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 // logging
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 // security headers

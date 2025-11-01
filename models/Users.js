@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-    userName: { type: String, required: true, unique: true, trim: true },
-    password: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    accountCreatedAt: { type: Date, default: new Date() },
-    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "PostMessage" }],
+  userName: { type: String, required: true, unique: true, trim: true },
+  password: { type: String, required: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  accountCreatedAt: { type: Date, default: new Date() },
+  bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "PostMessage" }],
+  resetPasswordToken: { type: String, index: true },
+  resetPasswordExpires: { type: Date },
 });
 
 // index for bookmarks lookups
