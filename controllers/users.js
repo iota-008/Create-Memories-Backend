@@ -6,6 +6,7 @@ import Comment from "../models/Comment.js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import qs from "querystring";
+import { IS_PROD, FRONTEND_URL, SECRET_KEY, GOOGLE } from "../config.js";
 
 // Google OAuth helpers (top-level)
 const googleAuthURL = () => {
@@ -41,9 +42,9 @@ export const googleOAuthCallback = async (req, res) => {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
                 code,
-                client_id: process.env.GOOGLE_CLIENT_ID,
-                client_secret: process.env.GOOGLE_CLIENT_SECRET,
-                redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+                client_id: GOOGLE.CLIENT_ID,
+                client_secret: GOOGLE.CLIENT_SECRET,
+                redirect_uri: GOOGLE.REDIRECT_URI,
                 grant_type: "authorization_code",
             }),
         });
@@ -85,20 +86,18 @@ export const googleOAuthCallback = async (req, res) => {
         const expiresIn = "30d";
         jsonwebtoken.sign(
             { _id: user._id, userName: user.userName },
-            process.env.SECRET_KEY,
+            SECRET_KEY,
             { expiresIn },
             (err, token) => {
                 if (err) return res.status(500).json({ message: "Failed to create access token" });
-                const isProd = process.env.NODE_ENV === "production";
                 const cookieOptions = {
                     httpOnly: true,
-                    secure: isProd,
-                    sameSite: isProd ? "none" : "lax",
+                    secure: IS_PROD,
+                    sameSite: IS_PROD ? "none" : "lax",
                     maxAge: 30 * 24 * 60 * 60 * 1000,
                 };
                 res.cookie("accessToken", token, cookieOptions);
-                const frontend = (process.env.FRONTEND_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
-                const redirectUrl = `${frontend}/auth/login?oauth=1&token=${encodeURIComponent(token)}`;
+                const redirectUrl = `${FRONTEND_URL}/auth/login?oauth=1&token=${encodeURIComponent(token)}`;
                 return res.redirect(redirectUrl);
             }
         );
@@ -140,17 +139,16 @@ export const registerUser = async (req, res) => {
         const expiresIn = remember ? "30d" : "1d";
         jsonwebtoken.sign(
             { _id: user._id, userName: user.userName },
-            process.env.SECRET_KEY,
+            SECRET_KEY,
             { expiresIn },
             (err, token) => {
                 if (err) {
                     return res.status(500).json({ message: "Failed to create access token" });
                 }
-                const isProd = process.env.NODE_ENV === "production";
                 const cookieOptions = {
                     httpOnly: true,
-                    secure: isProd,
-                    sameSite: isProd ? "none" : "lax",
+                    secure: IS_PROD,
+                    sameSite: IS_PROD ? "none" : "lax",
                     maxAge: remember ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
                 };
                 res.cookie("accessToken", token, cookieOptions);
@@ -248,17 +246,16 @@ export const loginUser = async (req, res) => {
         const expiresIn = remember ? "30d" : "1d";
         jsonwebtoken.sign(
             { _id: user._id, userName: user.userName },
-            process.env.SECRET_KEY,
+            SECRET_KEY,
             { expiresIn },
             (err, token) => {
                 if (err) {
                     return res.status(500).json({ message: "Failed to create access token" });
                 }
-                const isProd = process.env.NODE_ENV === "production";
                 const cookieOptions = {
                     httpOnly: true,
-                    secure: isProd,
-                    sameSite: isProd ? "none" : "lax",
+                    secure: IS_PROD,
+                    sameSite: IS_PROD ? "none" : "lax",
                     maxAge: remember ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
                 };
                 res.cookie("accessToken", token, cookieOptions);
@@ -279,11 +276,10 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
     try {
-        const isProd = process.env.NODE_ENV === "production";
         const cookieOptions = {
             httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? "none" : "lax",
+            secure: IS_PROD,
+            sameSite: IS_PROD ? "none" : "lax",
         };
         res.clearCookie("accessToken", cookieOptions);
         return res.status(200).json({ message: `Logged out Successfully` });
