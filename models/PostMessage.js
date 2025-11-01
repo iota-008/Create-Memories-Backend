@@ -29,10 +29,36 @@ const postSchema = new mongoose.Schema(
     }
 );
 
-// likeCount derived from reactions of type 'like'
-postSchema.virtual("likeCount").get(function () {
-    if (!Array.isArray(this.reactions)) return 0;
-    return this.reactions.reduce((acc, r) => (r && r.type === "like" ? acc + 1 : acc), 0);
+// reactionsCount: total number of reactions on the post
+postSchema.virtual("reactionsCount").get(function () {
+    return Array.isArray(this.reactions) ? this.reactions.length : 0;
+});
+
+// reactionsBreakdown: counts per supported reaction (normalized to emojis)
+postSchema.virtual("reactionsBreakdown").get(function () {
+    const EMOJIS = ['👍','❤️','😂','😮','🎉'];
+    const ALIASES = {
+        like: '👍',
+        love: '❤️',
+        haha: '😂',
+        wow: '😮',
+        party: '🎉',
+        tada: '🎉',
+        celebrate: '🎉',
+    };
+    const toEmoji = (t) => {
+        const k = (t || '').toString().trim();
+        if (EMOJIS.includes(k)) return k;
+        const key = k.toLowerCase ? k.toLowerCase() : k;
+        return ALIASES[key] || '';
+    };
+    const out = { '👍': 0, '❤️': 0, '😂': 0, '😮': 0, '🎉': 0 };
+    if (!Array.isArray(this.reactions)) return out;
+    for (const r of this.reactions) {
+        const e = toEmoji(r && r.type);
+        if (e && out.hasOwnProperty(e)) out[e] += 1;
+    }
+    return out;
 });
 
 // indexes for reactions lookups
@@ -70,19 +96,38 @@ export default PostMessage;
  *         selectedFile:
  *           type: string
  *           description: Base64 or URL
- *         likeCount:
+ *         reactions:
+ *           type: array
+ *           description: List of user reactions with a single reaction per user.
+ *           items:
+ *             type: object
+ *             properties:
+ *               user:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 description: Emoji (👍❤️😂😮🎉) or legacy alias (like, love, haha, wow, party/tada)
+ *         reactionsCount:
  *           type: number
+ *           description: Total number of reactions on the post
+ *         reactionsBreakdown:
+ *           type: object
+ *           description: Per-emoji reaction counts (normalized)
+ *           properties:
+ *             "👍":
+ *               type: number
+ *             "❤️":
+ *               type: number
+ *             "😂":
+ *               type: number
+ *             "😮":
+ *               type: number
+ *             "🎉":
+ *               type: number
  *         createdAt:
  *           type: string
  *           format: date-time
- *         likedPosts:
- *           type: array
- *           items:
- *             type: string
- *             description: User ObjectId
- *           example:
- *             - "60f7a2c2e1c3a12b4c8f9e0a"
- *             - "60f7a2c2e1c3a12b4c8f9e0b"
+ *
  *         userName:
  *           type: string
  */
