@@ -25,6 +25,14 @@ const userWriteLimiter = rateLimit({
   keyGenerator: (req, _res) => (req.user && req.user._id ? String(req.user._id) : ipKeyGenerator(req)),
 });
 
+// Public read limiter (by IP)
+const publicReadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * @openapi
  * /posts:
@@ -330,6 +338,33 @@ router.delete("/:id", verify, userWriteLimiter, deletePost);
  *                     $ref: '#/components/schemas/Comment'
  */
 router.get("/:id", verify, getPostById);
+
+/**
+ * @openapi
+ * /posts/public/{id}:
+ *   get:
+ *     summary: Public - Get a single post by id without authentication
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: preview
+ *         schema:
+ *           type: integer
+ *           description: Number of latest comments to include (default 3, max 10)
+ *     responses:
+ *       200:
+ *         description: Post with preview comments
+ *       400:
+ *         description: Invalid id
+ *       404:
+ *         description: Not found
+ */
+router.get("/public/:id", publicReadLimiter, getPostById);
 
 // React to a post
 const reactSchema = Joi.object({ type: Joi.string().max(64).allow("") });
