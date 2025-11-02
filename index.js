@@ -117,9 +117,16 @@ const swaggerDefinition = {
     info: {
         title: "Memories API",
         version: "1.0.0",
+        description: "API for Memories application - " + 
+                   (process.env.NODE_ENV === 'production' ? 'Production' : 'Development') + " Environment"
     },
     servers: [
-        { url: `http://localhost:${ process.env.PORT || 5000 }` },
+        {
+            url: process.env.NODE_ENV === 'production' 
+                ? 'https://memories-api.duckdns.org' 
+                : `http://localhost:${process.env.PORT || 5000}`,
+            description: process.env.NODE_ENV === 'production' ? 'Production' : 'Development'
+        }
     ],
     components: {
         securitySchemes: {
