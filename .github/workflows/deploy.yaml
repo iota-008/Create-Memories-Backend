@@ -8,6 +8,12 @@ on:
       - "package*.json"
       - ".github/workflows/deploy.yaml"
 
+env:
+  VM_USER: ubuntu
+  DEPLOY_PATH: /opt/projects/memories/backend
+  COMPOSE_FILE: /home/ubuntu/stacks/memories/docker-compose.yml
+  ENV_FILE: /home/ubuntu/stacks/memories/.env
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -24,30 +30,29 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
+          username: ${{ env.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -euo pipefail
-            # Debug: Print environment and check directory
             echo "Current directory: $(pwd)"
             echo "Listing /opt/projects/memories:"
             ls -la /opt/projects/memories || true
             
             # Ensure the directory exists
-            sudo mkdir -p ${{ secrets.DEPLOY_PATH }}
-            sudo chown -R ${{ secrets.VM_USER }}: ${{ secrets.DEPLOY_PATH }}
+            sudo mkdir -p ${{ env.DEPLOY_PATH }}
+            sudo chown -R ${{ env.VM_USER }}: ${{ env.DEPLOY_PATH }}
             
             # Clone or update the repository
-            if [ -d "${{ secrets.DEPLOY_PATH }}/.git" ]; then
+            if [ -d "${{ env.DEPLOY_PATH }}/.git" ]; then
               echo "Updating existing repository..."
-              cd "${{ secrets.DEPLOY_PATH }}"
+              cd "${{ env.DEPLOY_PATH }}"
               git fetch --all
               git reset --hard origin/main
             else
               echo "Cloning repository..."
-              git clone "https://github.com/${{ github.repository }}.git" "${{ secrets.DEPLOY_PATH }}"
-              cd "${{ secrets.DEPLOY_PATH }}"
+              git clone "https://github.com/${{ github.repository }}.git" "${{ env.DEPLOY_PATH }}"
+              cd "${{ env.DEPLOY_PATH }}"
             fi
             
             # Install dependencies and start the application
-            docker compose -f "${{ secrets.COMPOSE_FILE }}" --env-file "${{ secrets.ENV_FILE }}" up -d --build
+            docker compose -f "${{ env.COMPOSE_FILE }}" --env-file "${{ env.ENV_FILE }}" up -d --build
