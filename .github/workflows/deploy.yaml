@@ -20,6 +20,17 @@ jobs:
         env:
           VM_HOST_KEY: ${{ secrets.VM_HOST_KEY }}
 
+      - name: Debug Deploy Path
+        run: |
+          echo "DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}"
+          echo "COMPOSE_FILE: ${{ secrets.COMPOSE_FILE }}"
+          echo "ENV_FILE: ${{ secrets.ENV_FILE }}"
+
+      - name: Ensure Deploy Directory Exists
+        run: |
+          mkdir -p "${{ secrets.DEPLOY_PATH }}"
+          ls -la "${{ secrets.DEPLOY_PATH }}"
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -28,6 +39,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -euo pipefail
-            git -C "${{ secrets.DEPLOY_PATH }}" fetch --all
-            git -C "${{ secrets.DEPLOY_PATH }}" reset --hard origin/main
+            echo "Changing to directory: ${{ secrets.DEPLOY_PATH }}"
+            cd "${{ secrets.DEPLOY_PATH }}" || exit 1
+            git fetch --all
+            git reset --hard origin/main
             docker compose -f "${{ secrets.COMPOSE_FILE }}" --env-file "${{ secrets.ENV_FILE }}" up -d
