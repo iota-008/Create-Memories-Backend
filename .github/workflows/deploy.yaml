@@ -45,7 +45,7 @@ jobs:
               git reset --hard origin/main
             else
               echo "Cloning repository..."
-              git clone ${{ github.repository_url }} "${{ secrets.DEPLOY_PATH }}"
+              git clone "https://github.com/${{ github.repository }}.git" "${{ secrets.DEPLOY_PATH }}"
               cd "${{ secrets.DEPLOY_PATH }}"
             fi
             
