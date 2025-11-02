@@ -104,6 +104,11 @@ app.get( "/", ( req, res ) =>
     res.send( "Welcome to memories API" );
 } );
 
+// Health check
+app.get("/health", (req, res) => {
+    return res.status(200).json({ status: "ok", uptime: process.uptime() });
+});
+
 // Swagger/OpenAPI setup
 const swaggerDefinition = {
     openapi: "3.0.0",
