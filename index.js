@@ -14,6 +14,8 @@ import morgan from "morgan";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 const app = express();
+// Behind Traefik/NGINX, trust proxy so req.ip and X-Forwarded-* are honored
+app.set("trust proxy", true);
 dotenv.config();
 app.use( cookieParser() );
 app.use(
