@@ -34,25 +34,46 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -euo pipefail
-            echo "Current directory: $(pwd)"
-            echo "Listing /opt/projects/memories:"
-            ls -la /opt/projects/memories || true
+            echo "🔄 Starting deployment process..."
             
-            # Ensure the directory exists
+            # Ensure the deployment directory exists
+            echo "📂 Setting up directory: ${{ env.DEPLOY_PATH }}"
             sudo mkdir -p ${{ env.DEPLOY_PATH }}
             sudo chown -R ${{ env.VM_USER }}: ${{ env.DEPLOY_PATH }}
             
+            # Navigate to the parent directory
+            cd $(dirname ${{ env.DEPLOY_PATH }})
+            
             # Clone or update the repository
             if [ -d "${{ env.DEPLOY_PATH }}/.git" ]; then
-              echo "Updating existing repository..."
-              cd "${{ env.DEPLOY_PATH }}"
+              echo "🔄 Updating existing repository..."
+              cd ${{ env.DEPLOY_PATH }}
               git fetch --all
               git reset --hard origin/main
+              git clean -fd  # Remove untracked files
             else
-              echo "Cloning repository..."
-              git clone "https://github.com/${{ github.repository }}.git" "${{ env.DEPLOY_PATH }}"
-              cd "${{ env.DEPLOY_PATH }}"
+              echo "📥 Cloning repository..."
+              git clone "https://github.com/iota-008/Create-Memories-Backend.git" "${{ env.DEPLOY_PATH }}"
+              cd ${{ env.DEPLOY_PATH }}
             fi
             
-            # Install dependencies and start the application
-            docker compose -f "${{ env.COMPOSE_FILE }}" --env-file "${{ env.ENV_FILE }}" up -d --build
+            # Install dependencies and restart the container
+            echo "🚀 Deploying application..."
+            cd $(dirname ${{ env.COMPOSE_FILE }})
+            
+            # Stop and remove existing containers
+            echo "🛑 Stopping existing containers..."
+            docker compose -f ${{ env.COMPOSE_FILE }} down || true
+            
+            # Pull latest changes and rebuild
+            echo "🔧 Building and starting containers..."
+            docker compose -f ${{ env.COMPOSE_FILE }} up -d --build --remove-orphans
+            
+            # Verify deployment
+            echo "✅ Deployment complete!"
+            echo "📊 Container status:"
+            docker ps --filter "name=memories" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            
+            # Show recent logs
+            echo "📝 Recent logs:"
+            docker logs --tail=20 memories-memories-api-1 || true
