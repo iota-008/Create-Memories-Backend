@@ -140,6 +140,6 @@ Visit `http://localhost:5000/docs` for interactive API documentation!
 
 **Ankit Raibole**
 - GitHub: [@iota-008](https://github.com/iota-008)
-- Portfolio: [View Projects](https://github.com/iota-008)
+- Portfolio: [View Projects](https://iota-008.github.io)
 
 ---
