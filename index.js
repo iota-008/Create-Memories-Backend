@@ -177,10 +177,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 let server;
 mongoose
-    .connect( process.env.CONNECTION_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    } )
+    .connect( process.env.CONNECTION_URL )
     .then( () => {
         server = app.listen( PORT, () => console.log( `***** server is runing on port ${ PORT } *****` ) );
     } )

@@ -1,78 +1,146 @@
-[![ReactJs](https://camo.githubusercontent.com/beae01a1b58781b6632e5be556b37abc53290548813b395146b9413f8865c7d5/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f43524d2d52656163744a532d626c75653f6c6f676f3d7265616374)](http://www.gnu.org/licenses/agpl-3.0)
-[![NodeJs](https://camo.githubusercontent.com/121518d6a2d28e79df0a5c253eb788c17677b454b05ee4facede396bc0c3d0d8/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4261636b656e642d4e6f64654a532d677265656e3f6c6f676f3d6e6f64652e6a73)](https://opensource.org/licenses/)
-[![MongoDB](https://camo.githubusercontent.com/b7cfb0451842c6d69d0dce1685c6c48be7595f454c3392439f2b9b3e5b2e6db4/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f44617461426173652d4d6f6e676f44422d6c69676874677265656e3f6c6f676f3d6d6f6e676f4442)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
+[![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white)](https://expressjs.com/)
+[![JWT](https://img.shields.io/badge/JWT-000000?style=flat&logo=json-web-tokens&logoColor=white)](https://jwt.io/)
+[![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=flat&logo=swagger&logoColor=black)](https://swagger.io/)
 
-# Memories Backend
+# 🚀 Memories Backend API
 
-Memories is an application where people can share their memories in form of posts with people around the world.
-This repository contains the backend code for memories application, which is deployed on heroku. 
+A robust, scalable REST API backend for the Memories social platform, built with modern JavaScript technologies. This project demonstrates expertise in full-stack development, API design, security implementation, and cloud deployment.
 
-## Live
+**Memories** is a dynamic social application enabling users worldwide to share and discover memorable experiences through posts and interactive comments. The backend handles user authentication, content management, and real-time interactions with enterprise-grade security and performance.
 
-Application is live here: https://create-your-memory.netlify.app/
+## 🌐 Live Demo & Documentation
 
-## Frontend
+- **Frontend Application**: [https://create-your-memory.netlify.app/](https://create-your-memory.netlify.app/)
+- **Backend API**: [https://memories-api.duckdns.org](https://memories-api.duckdns.org)
+- **Interactive API Docs**: [https://memories-api.duckdns.org/docs](https://memories-api.duckdns.org/docs)
+- **Frontend Repository**: [https://github.com/iota-008/Create-Memories](https://github.com/iota-008/Create-Memories)
 
-Applications Frontend: https://github.com/iota-008/Create-Memories
+## 🛠️ Tech Stack & Architecture
 
-# Demo
+### Core Technologies
+- **Runtime**: Node.js with ES6+ features
+- **Framework**: Express.js for RESTful API development
+- **Database**: MongoDB with Mongoose ODM for flexible data modeling
+- **Authentication**: JWT tokens with bcrypt password hashing
+- **Documentation**: Swagger/OpenAPI for comprehensive API documentation
 
-https://user-images.githubusercontent.com/46680697/150509819-9be2d73a-3f69-47e5-bef3-e536a95ac371.mp4
+### Security & Performance
+- **Security Middleware**: Helmet, CORS, Rate Limiting, MongoDB Sanitization, XSS Protection
+- **Authentication**: Secure JWT implementation with refresh tokens
+- **Data Validation**: Joi schema validation
+- **Logging**: Morgan for request logging
+- **Error Handling**: Centralized error management with proper HTTP status codes
 
-
-## Tech Stack
-
-**Client:** React, Redux, MaterialUI, MakeStyles, Redux-Thunk
-
-**Server:** Node, Express, JWT Authorization
-
-**Database:** MongoDB
-
-**Languages** Javascript, JSX, HTML, CSS
+### DevOps & Deployment
+- **Environment Management**: dotenv for configuration
+- **Process Management**: Graceful shutdown handling
+- **Deployment**: VPS with Traefik reverse proxy
+- **Container Ready**: Modular architecture for easy containerization
 
 ![Logo](https://i.ibb.co/qDG1gLL/Memories-logo.png)
-## Installation
 
-To run backend in localhost you have to add your own environment variables for mongodb connect and a secret key for JWT verification.
+## 📋 Key Features
 
-Install Memories Backend
+### 🔐 Authentication & Authorization
+- User registration and login with secure password hashing
+- JWT-based authentication with cookie support
+- Google OAuth integration (optional)
+- Role-based access control
 
+### 📝 Content Management
+- Full CRUD operations for posts and comments
+- Post liking and interaction tracking
+- Image upload support with file validation
+- Real-time content updates
+
+### 🛡️ Security & Performance
+- Rate limiting to prevent abuse
+- Input sanitization and validation
+- CORS configuration for cross-origin requests
+- Comprehensive error handling and logging
+
+### 📚 Developer Experience
+- Auto-generated Swagger documentation
+- Health check endpoints for monitoring
+- Modular architecture with clean separation of concerns
+- Comprehensive logging and debugging support
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js (v14+)
+- MongoDB (local or Atlas)
+- npm or yarn
+
+### Installation
 ```bash
-  - fork the repo
-  - clone from your account
-  - change to the cloned directory
-  - run: npm install
-  - run: npm start
+# Clone the repository
+git clone https://github.com/iota-008/Create-Memories-Backend.git
+cd Create-Memories-Backend
 
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
-See the project running on localhost :)
-
-    
-## Features
-
-- Login/SignUp
-- Create Post
-- Modify existing posts
-- Like Other's Posts
-- Delete Own Posts
-
-
-## Deployment
-
-The backend has been deployed on heroku.
-Every new push to main branch automatically deploys the newer version.
- 
-pull from main, add changes, commit and push
-
-```bash
-    git pull origin main
-    git add .
-    git commit -m "your comment"
-    git push origin main
+### Environment Configuration
+Create a `.env` file with:
+```env
+NODE_ENV=development
+PORT=5000
+CONNECTION_URL=mongodb://localhost:27017/memories
+SECRET_KEY=your_secure_jwt_secret
+FRONTEND_URL=http://localhost:3000
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
-* note connect to your own heroku account.
-## Authors
+### Running the Application
+```bash
+# Development mode with auto-reload
+npm run dev
 
-- [@iota-008](https://www.github.com/iota-008)
+# Production mode
+npm start
+```
+
+Visit `http://localhost:5000/docs` for interactive API documentation!
+
+## 📡 API Endpoints Overview
+
+| Resource | Operations | Description |
+|----------|------------|-------------|
+| **Users** | POST /user/register, POST /user/login | User management and authentication |
+| **Posts** | GET/POST /posts, PUT/DELETE /posts/:id | Content creation and management |
+| **Comments** | GET/POST /comments, PUT/DELETE /comments/:id | Interactive commenting system |
+| **Health** | GET /health | System monitoring |
+
+## 🏗️ Architecture Highlights
+
+- **RESTful Design**: Clean, intuitive API endpoints following REST principles
+- **MVC Pattern**: Organized code structure with models, controllers, and routes
+- **Middleware Chain**: Comprehensive request processing pipeline
+- **Database Optimization**: Efficient queries with Mongoose indexing
+- **Scalable Structure**: Modular design ready for microservices migration
+
+## 📈 Performance & Security
+
+- **Rate Limiting**: Prevents API abuse with configurable limits
+- **Data Sanitization**: Protects against NoSQL injection and XSS attacks
+- **Secure Headers**: Helmet.js for security headers
+- **Input Validation**: Joi schemas ensure data integrity
+- **Error Boundaries**: Graceful error handling without exposing sensitive information
+
+## 👨‍💻 Developer
+
+**Ankit Raibole**
+- GitHub: [@iota-008](https://github.com/iota-008)
+- Portfolio: [View Projects](https://github.com/iota-008)
+
+---
+
+*Built with ❤️ using modern JavaScript technologies. Demonstrates production-ready backend development skills.*
