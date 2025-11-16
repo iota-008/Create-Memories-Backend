@@ -84,7 +84,7 @@ export const getPostById = async (req, res) => {
 
         const [agg, comments] = await Promise.all([
             Comment.aggregate([
-                { $match: { postId: mongoose.Types.ObjectId(id) } },
+                { $match: { postId: new mongoose.Types.ObjectId(id) } },
                 { $group: { _id: "$postId", count: { $sum: 1 } } },
             ]),
             Comment.find({ postId: id })
@@ -143,7 +143,7 @@ export const updatePost = async (req, res) => {
 
         // attach commentCount
         const agg = await Comment.aggregate([
-            { $match: { postId: mongoose.Types.ObjectId(id) } },
+            { $match: { postId: new mongoose.Types.ObjectId(id) } },
             { $group: { _id: "$postId", count: { $sum: 1 } } },
         ]);
         const commentCount = agg.length ? agg[0].count : 0;
@@ -192,7 +192,7 @@ export const reactToPost = async (req, res) => {
             return res.status(404).json({ message: "Post not found" });
         }
 
-        const userId = mongoose.Types.ObjectId(user._id);
+        const userId = new mongoose.Types.ObjectId(user._id);
         // Remove any prior reaction by this user
         await PostMessage.updateOne({ _id: id }, { $pull: { reactions: { user: userId } } });
         let message = "Reaction removed";
@@ -207,7 +207,7 @@ export const reactToPost = async (req, res) => {
         const reactedPost = await PostMessage.findById(id).lean({ virtuals: true });
         // attach commentCount
         const agg = await Comment.aggregate([
-            { $match: { postId: mongoose.Types.ObjectId(id) } },
+            { $match: { postId: new mongoose.Types.ObjectId(id) } },
             { $group: { _id: "$postId", count: { $sum: 1 } } },
         ]);
         const commentCount = agg.length ? agg[0].count : 0;
