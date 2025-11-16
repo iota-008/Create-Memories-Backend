@@ -102,13 +102,22 @@ export const getPostById = async (req, res) => {
 
 export const createPost = async (req, res) => {
     const { title, message, selectedFile, creator, tags, userName } = req.body;
+    const user = req.user;
+
+    // Use provided userName or get from authenticated user
+    const finalUserName = userName || user?.userName;
+
+    if (!finalUserName) {
+        return res.status(400).json({ message: "userName is required" });
+    }
+
     const newPostMessage = await new PostMessage({
         title,
         message,
         selectedFile,
         creator,
         tags,
-        userName,
+        userName: finalUserName,
     });
 
     try {
@@ -126,6 +135,10 @@ export const createPost = async (req, res) => {
 export const updatePost = async (req, res) => {
     const { id } = req.params;
     const { title, message, creator, selectedFile, tags, userName } = req.body;
+    const user = req.user;
+
+    // Use provided userName or get from authenticated user
+    const finalUserName = userName || user?.userName;
 
     try {
         if (!mongoose.Types.ObjectId.isValid(id))
@@ -133,7 +146,7 @@ export const updatePost = async (req, res) => {
 
         const updatedPost = await PostMessage.findByIdAndUpdate(
             id,
-            { creator, title, message, tags, selectedFile, userName },
+            { creator, title, message, tags, selectedFile, userName: finalUserName },
             { new: true }
         );
 

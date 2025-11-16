@@ -194,7 +194,7 @@ const upsertPostSchema = Joi.object({
   selectedFile: Joi.string().max(2_000_000).allow(""),
   creator: Joi.string().min(1).max(100).required(),
   tags: Joi.array().items(Joi.string().max(50)).default([]),
-  userName: Joi.string().min(1).max(64).required(),
+  userName: Joi.string().min(1).max(64).optional(),
 });
 
 const validate = (schema) => (req, res, next) => {
