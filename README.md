@@ -22,16 +22,16 @@ A robust, scalable REST API backend for the Memories social platform, built with
 ### Core Technologies
 - **Runtime**: Node.js with ES6+ features
 - **Framework**: Express.js for RESTful API development
-- **Database**: MongoDB with Mongoose ODM for flexible data modeling
+- **Database**: MongoDB with Mongoose ODM for flexible data modelling
 - **Authentication**: JWT tokens with bcrypt password hashing
 - **Documentation**: Swagger/OpenAPI for comprehensive API documentation
 
 ### Security & Performance
-- **Security Middleware**: Helmet, CORS, Rate Limiting, MongoDB Sanitization, XSS Protection
+- **Security Middleware**: Helmet, CORS, Rate Limiting, MongoDB Sanitisation, XSS Protection
 - **Authentication**: Secure JWT implementation with refresh tokens
 - **Data Validation**: Joi schema validation
 - **Logging**: Morgan for request logging
-- **Error Handling**: Centralized error management with proper HTTP status codes
+- **Error Handling**: Centralised error management with proper HTTP status codes
 
 ### DevOps & Deployment
 - **Environment Management**: dotenv for configuration
@@ -39,7 +39,8 @@ A robust, scalable REST API backend for the Memories social platform, built with
 - **Deployment**: VPS with Traefik reverse proxy
 - **Container Ready**: Modular architecture for easy containerization
 
-![Logo](https://i.ibb.co/qDG1gLL/Memories-logo.png)
+<img width="549" height="455" alt="Memories-logo" src="https://github.com/user-attachments/assets/0fa265d2-4cc8-49df-a27c-1aadeb5852ca" />
+
 
 ## 📋 Key Features
 
@@ -57,7 +58,7 @@ A robust, scalable REST API backend for the Memories social platform, built with
 
 ### 🛡️ Security & Performance
 - Rate limiting to prevent abuse
-- Input sanitization and validation
+- Input sanitisation and validation
 - CORS configuration for cross-origin requests
 - Comprehensive error handling and logging
 
@@ -122,7 +123,7 @@ Visit `http://localhost:5000/docs` for interactive API documentation!
 ## 🏗️ Architecture Highlights
 
 - **RESTful Design**: Clean, intuitive API endpoints following REST principles
-- **MVC Pattern**: Organized code structure with models, controllers, and routes
+- **MVC Pattern**: Organised code structure with models, controllers, and routes
 - **Middleware Chain**: Comprehensive request processing pipeline
 - **Database Optimization**: Efficient queries with Mongoose indexing
 - **Scalable Structure**: Modular design ready for microservices migration
@@ -130,7 +131,7 @@ Visit `http://localhost:5000/docs` for interactive API documentation!
 ## 📈 Performance & Security
 
 - **Rate Limiting**: Prevents API abuse with configurable limits
-- **Data Sanitization**: Protects against NoSQL injection and XSS attacks
+- **Data Sanitisation**: Protects against NoSQL injection and XSS attacks
 - **Secure Headers**: Helmet.js for security headers
 - **Input Validation**: Joi schemas ensure data integrity
 - **Error Boundaries**: Graceful error handling without exposing sensitive information
@@ -142,5 +143,3 @@ Visit `http://localhost:5000/docs` for interactive API documentation!
 - Portfolio: [View Projects](https://github.com/iota-008)
 
 ---
-
-*Built with ❤️ using modern JavaScript technologies. Demonstrates production-ready backend development skills.*
